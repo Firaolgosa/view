@@ -27,8 +27,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
             controller.loadRequest(Uri.parse('https://www.google.com'));
           }
         },
-      )
-      ..loadFlutterAsset('assets/web/index.html');
+      );
+
+    if (widget.url != null) {
+      controller.loadRequest(Uri.parse(widget.url!));
+    } else {
+      controller.loadFlutterAsset('assets/web/index.html');
+    }
   }
 
   @override

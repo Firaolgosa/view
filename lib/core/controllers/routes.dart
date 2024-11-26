@@ -17,7 +17,8 @@ final GoRouter router = GoRouter(
       path: '/web-view',
       name: 'web-view',
       builder: (BuildContext context, GoRouterState state) {
-        return const WebViewScreen();
+        final Map<String, dynamic>? extra = state.extra as Map<String, dynamic>?;
+        return WebViewScreen(url: extra?['url']);
       },
     ),
   ],

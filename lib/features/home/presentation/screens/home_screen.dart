@@ -24,15 +24,37 @@ class _HomeMobileLayout extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight: 100,
+              expandedHeight: MediaQuery.of(context).size.height * 0.3,
               floating: true,
               pinned: true,
+              stretch: true,
               flexibleSpace: FlexibleSpaceBar(
-                background: Image.asset(
-                  'assets/images/img.jpg',
-                  fit: BoxFit.cover,
+                stretchModes: const [
+                  StretchMode.zoomBackground,
+                  StretchMode.blurBackground,
+                ],
+                background: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/img.jpg'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-                title: const Text('Welcome'),
+                title: const Text(
+                  'Welcome',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 3.0,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ],
+                  ),
+                ),
                 centerTitle: true,
               ),
             ),
@@ -118,7 +140,14 @@ Widget _buildActionButtons(BuildContext context) {
         'Settings',
         Icons.settings,
         Colors.orange,
-        () {},
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WebViewScreen(
+              url: 'https://www.facebook.com',
+            ),
+          ),
+        ),
       ),
       _buildActionButton(
         'Help',
