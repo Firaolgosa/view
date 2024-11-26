@@ -105,7 +105,14 @@ Widget _buildActionButtons(BuildContext context) {
         'Profile',
         Icons.person,
         Colors.green,
-        () {},
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const WebViewScreen(
+              url: 'https://www.google.com',
+            ),
+          ),
+        ),
       ),
       _buildActionButton(
         'Settings',

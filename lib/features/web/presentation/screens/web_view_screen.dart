@@ -3,7 +3,8 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 
 class WebViewScreen extends StatefulWidget {
-  const WebViewScreen({super.key});
+  final String? url;
+  const WebViewScreen({super.key, this.url});
 
   @override
   State<WebViewScreen> createState() => _WebViewScreenState();
@@ -16,18 +17,16 @@ class _WebViewScreenState extends State<WebViewScreen> {
   void initState() {
     super.initState();
     controller = WebViewController()
-      ..loadFlutterAsset('assets/web/index.html')
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
         'flutter_inappwebview',
-        onMessageReceived: (message) {
+        onMessageReceived: (JavaScriptMessage message) {
           if (message.message == 'close') {
             Navigator.pop(context);
-          } else {
-            print('Message from web: ${message.message}');
           }
         },
-      );
+      )
+      ..loadFlutterAsset('assets/web/index.html');
   }
 
   @override
