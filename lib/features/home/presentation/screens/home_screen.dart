@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:view/core/widgets/responsive_layout.dart';
+import 'package:view/features/web/presentation/screens/web_view_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -37,10 +39,8 @@ class _HomeMobileLayout extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.all(16.0),
               sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _buildWelcomeCard(),
-                  const SizedBox(height: 24),
-                  _buildActionButtons(),
+                delegate: SliverChildListDelegate([                  const SizedBox(height: 24),
+                  _buildActionButtons(context),
                   const SizedBox(height: 24),
                   _buildFeaturedSection(),
                 ]),
@@ -83,7 +83,7 @@ Widget _buildWelcomeCard() {
   );
 }
 
-Widget _buildActionButtons() {
+Widget _buildActionButtons(BuildContext context) {
   return GridView.count(
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
@@ -96,7 +96,10 @@ Widget _buildActionButtons() {
         'Explore',
         Icons.explore,
         Colors.blue,
-        () {},
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const WebViewScreen()),
+        ),
       ),
       _buildActionButton(
         'Profile',

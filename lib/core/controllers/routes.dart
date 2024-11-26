@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:view/features/home/presentation/screens/home_screen.dart';
+import 'package:view/features/web/presentation/screens/web_view_screen.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/',
@@ -12,7 +13,13 @@ final GoRouter router = GoRouter(
         return const HomeScreen();
       },
     ),
-    // Add more routes here as needed
+    GoRoute(
+      path: '/web-view',
+      name: 'web-view',
+      builder: (BuildContext context, GoRouterState state) {
+        return const WebViewScreen();
+      },
+    ),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(

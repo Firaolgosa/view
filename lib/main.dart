@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:view/core/controllers/routes.dart';
-import 'package:view/core/theme/app_theme.dart';
-import 'package:view/core/widgets/custom_scroll_behavior.dart';
+import 'package:view/core/config/router.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,11 +11,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Flutter Demo',
-      theme: AppTheme.lightTheme,
+      title: 'Your App',
       routerConfig: router,
-      debugShowCheckedModeBanner: false,
-      scrollBehavior: CustomScrollBehavior(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
     );
   }
 }
