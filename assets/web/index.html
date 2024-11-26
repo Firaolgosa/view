@@ -78,9 +78,64 @@
             color: #495057;
             flex: 1;
         }
+
+        .close-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .close-button:hover {
+            transform: rotate(90deg);
+            background-color: #ff4444;
+        }
+
+        .close-button:hover .close-icon {
+            color: white;
+        }
+
+        .close-icon {
+            color: #333;
+            font-size: 24px;
+            transition: color 0.3s ease;
+        }
+
+        /* Add smooth transition to buttons */
+        .button {
+            /* ... existing button styles ... */
+            transition: all 0.3s ease;
+        }
+
+        .buy-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,122,255,0.2);
+        }
+
+        .connect-button:hover {
+            background-color: #dee2e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
+    <button class="close-button" onclick="handleClose()">
+        <span class="close-icon">×</span>
+    </button>
+
     <div class="container">
         <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff" 
              alt="Product Image" 
@@ -113,6 +168,13 @@
             // Function to communicate with Flutter app
             if (window.flutter_inappwebview) {
                 window.flutter_inappwebview.callHandler('connectHandler');
+            }
+        }
+
+        function handleClose() {
+            // Function to communicate with Flutter app to close webview
+            if (window.flutter_inappwebview) {
+                window.flutter_inappwebview.postMessage('close');
             }
         }
     </script>

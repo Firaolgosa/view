@@ -21,8 +21,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..addJavaScriptChannel(
         'flutter_inappwebview',
         onMessageReceived: (message) {
-          // Handle messages from web page
-          print('Message from web: ${message.message}');
+          if (message.message == 'close') {
+            Navigator.pop(context);
+          } else {
+            print('Message from web: ${message.message}');
+          }
         },
       );
   }
@@ -30,14 +33,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Product View'),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: WebViewWidget(controller: controller),
     );
   }
