@@ -23,6 +23,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
         onMessageReceived: (JavaScriptMessage message) {
           if (message.message == 'close') {
             Navigator.pop(context);
+          } else if (message.message == 'navigate_to_google') {
+            controller.loadRequest(Uri.parse('https://www.google.com'));
           }
         },
       )

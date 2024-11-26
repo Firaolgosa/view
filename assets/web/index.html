@@ -129,6 +129,91 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .modal-message {
+            color: #666;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .yes-button {
+            background-color: #007AFF;
+            color: white;
+        }
+
+        .no-button {
+            background-color: #E9ECEF;
+            color: #495057;
+        }
+
+        .yes-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,122,255,0.2);
+        }
+
+        .no-button:hover {
+            background-color: #dee2e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -156,12 +241,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="permissionModal">
+        <div class="modal">
+            <h2 class="modal-title">Permission Required</h2>
+            <p class="modal-message">Would you like to proceed to Google.com to complete your purchase?</p>
+            <div class="modal-buttons">
+                <button class="modal-button no-button" onclick="handlePermissionResponse(false)">No, Stay Here</button>
+                <button class="modal-button yes-button" onclick="handlePermissionResponse(true)">Yes, Continue</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function handleBuy() {
-            // Function to communicate with Flutter app
-            if (window.flutter_inappwebview) {
-                window.flutter_inappwebview.callHandler('buyHandler');
+            document.getElementById('permissionModal').style.display = 'flex';
+        }
+
+        function handlePermissionResponse(approved) {
+            if (approved) {
+                if (window.flutter_inappwebview) {
+                    window.flutter_inappwebview.postMessage('navigate_to_google');
+                }
             }
+            document.getElementById('permissionModal').style.display = 'none';
         }
 
         function handleConnect() {
