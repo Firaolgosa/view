@@ -137,9 +137,9 @@ Widget _buildActionButtons(BuildContext context) {
         ),
       ),
       _buildActionButton(
-        'Settings',
-        Icons.settings,
-        Colors.orange,
+        'Facebook',
+        Icons.facebook,
+        Colors.blue,
         () => Navigator.push(
           context,
           MaterialPageRoute(

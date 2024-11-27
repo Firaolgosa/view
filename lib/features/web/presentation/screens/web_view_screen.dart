@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io';
 import 'package:view/core/widgets/custom_modal.dart';
 import 'dart:convert';
+import 'package:go_router/go_router.dart';
 
 
 class WebViewScreen extends StatefulWidget {
@@ -31,6 +32,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (NavigationRequest request) {
+            if (request.url.contains('facebook.com/login')) {
+              _showFacebookPermissionModal();
+              return NavigationDecision.prevent;
+            }
             return NavigationDecision.navigate;
           },
         ),
@@ -45,6 +50,24 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   void _showPermissionModal() {
     setState(() => _showModal = true);
+  }
+
+  void _showFacebookPermissionModal() {
+    showDialog(
+      context: context,
+      builder: (context) => CustomModal(
+        title: 'Facebook Sign In',
+        message: 'Would you like to proceed with Facebook sign in?',
+        onConfirm: () {
+          Navigator.pop(context);
+          controller.loadRequest(Uri.parse('https://www.facebook.com/login'));
+        },
+        onCancel: () {
+          Navigator.pop(context);
+          context.go('/');
+        },
+      ),
+    );
   }
 
   void _handleWebMessage(JavaScriptMessage message) {
