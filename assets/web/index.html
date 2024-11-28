@@ -217,6 +217,48 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+
+        .upload-container {
+            margin: 20px;
+            padding: 20px;
+            border: 2px dashed #007AFF;
+            border-radius: 12px;
+            text-align: center;
+            background-color: rgba(0, 122, 255, 0.1);
+        }
+
+        .upload-list {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .upload-button {
+            background-color: #007AFF;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
@@ -253,6 +295,12 @@
                 <button class="modal-button yes-button" onclick="handlePermissionResponse(true)">Yes, Continue</button>
             </div>
         </div>
+    </div>
+
+    <div class="upload-container">
+        <h3>File Upload</h3>
+        <p>Files received from the app will appear here</p>
+        <div id="uploadList" class="upload-list"></div>
     </div>
 
     <script>
@@ -299,6 +347,56 @@
             if (window.flutter_inappwebview) {
                 window.flutter_inappwebview.postMessage('close');
             }
+        }
+
+        window.receiveFileFromApp = function(fileData) {
+            const { name, data, type } = fileData;
+            
+            // Create file item in list
+            const uploadList = document.getElementById('uploadList');
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            // Add file info
+            const fileInfo = document.createElement('div');
+            fileInfo.textContent = `${name} (${type})`;
+            fileItem.appendChild(fileInfo);
+            
+            // Add download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'upload-button';
+            downloadBtn.textContent = 'Download';
+            downloadBtn.onclick = () => {
+                const blob = base64ToBlob(data, type);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+            fileItem.appendChild(downloadBtn);
+            
+            uploadList.appendChild(fileItem);
+        };
+
+        function base64ToBlob(base64, type) {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+
+            return new Blob(byteArrays, { type: type });
         }
     </script>
 </body>

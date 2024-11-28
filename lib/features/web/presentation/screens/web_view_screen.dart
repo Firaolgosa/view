@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:view/core/widgets/custom_modal.dart';
 import 'dart:convert';
 import 'package:go_router/go_router.dart';
+import 'package:file_picker/file_picker.dart';
 
 
 class WebViewScreen extends StatefulWidget {
@@ -121,12 +122,41 @@ class _WebViewScreenState extends State<WebViewScreen> {
     }
   }
 
+  Future<void> _pickAndUploadFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
+    
+    if (result != null) {
+      final file = result.files.first;
+      final bytes = file.bytes;
+      if (bytes != null) {
+        final base64File = base64Encode(bytes);
+        
+        // Send file to WebView
+        await controller.runJavaScript('''
+          receiveFileFromApp({
+            name: '${file.name}',
+            data: '$base64File',
+            type: '${file.extension ?? 'application/octet-stream'}'
+          });
+        ''');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Scaffold(
           body: WebViewWidget(controller: controller),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _pickAndUploadFile,
+            child: const Icon(Icons.upload_file),
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
         ),
         if (_showModal)
           CustomModal(
