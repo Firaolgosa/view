@@ -259,6 +259,136 @@
             background-color: #0056b3;
             transform: translateY(-2px);
         }
+
+        .gallery-container {
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f8f9fa;
+            transition: transform 0.2s;
+            border: 1px solid #eee;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .preview-container {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            padding: 12px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .preview-file {
+            width: 64px;
+            height: 64px;
+            background: #e9ecef;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #495057;
+        }
+
+        .file-info {
+            padding: 12px;
+            background: white;
+        }
+
+        .file-name {
+            font-size: 14px;
+            color: #212529;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .action-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #adb5bd;
+        }
     </style>
 </head>
 <body>
@@ -301,6 +431,19 @@
         <h3>File Upload</h3>
         <p>Files received from the app will appear here</p>
         <div id="uploadList" class="upload-list"></div>
+    </div>
+
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h2>Uploaded Files</h2>
+            <span id="fileCount">0 items</span>
+        </div>
+        <div id="galleryGrid" class="gallery-grid">
+            <div class="empty-state">
+                <div class="empty-state-icon">📁</div>
+                <p>No files uploaded yet</p>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -397,6 +540,88 @@
             }
 
             return new Blob(byteArrays, { type: type });
+        }
+
+        function receiveFileFromApp(fileData) {
+            const { name, type, data } = fileData;
+            const galleryGrid = document.getElementById('galleryGrid');
+            
+            // Clear empty state if it exists
+            if (galleryGrid.querySelector('.empty-state')) {
+                galleryGrid.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-container';
+
+            if (type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'preview-image';
+                img.src = `data:${type};base64,${data}`;
+                previewContainer.appendChild(img);
+            } else {
+                const fileIcon = document.createElement('div');
+                fileIcon.className = 'preview-file';
+                fileIcon.textContent = getFileIcon(type);
+                previewContainer.appendChild(fileIcon);
+            }
+
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+            fileInfo.innerHTML = `
+                <div class="file-name">${name}</div>
+                <div class="file-meta">${formatFileType(type)}</div>
+            `;
+
+            const actionButtons = document.createElement('div');
+            actionButtons.className = 'action-buttons';
+            actionButtons.innerHTML = `
+                <button class="action-button" onclick="downloadFile('${name}', '${data}', '${type}')">
+                    ⬇️
+                </button>
+            `;
+
+            item.appendChild(previewContainer);
+            item.appendChild(fileInfo);
+            item.appendChild(actionButtons);
+            galleryGrid.appendChild(item);
+
+            updateFileCount();
+            
+            // Notify Flutter
+            Flutter.postMessage(JSON.stringify({
+                type: 'uploadComplete'
+            }));
+        }
+
+        function getFileIcon(type) {
+            const icons = {
+                'application/pdf': '📄',
+                'text/': '📝',
+                'audio/': '🎵',
+                'video/': '🎬',
+                'application/zip': '📦',
+                'application/x-zip-compressed': '📦',
+                'application/vnd.openxmlformats-officedocument': '📑',
+                'application/msword': '📑',
+            };
+
+            for (const [key, icon] of Object.entries(icons)) {
+                if (type.startsWith(key)) return icon;
+            }
+            return '📄';
+        }
+
+        function formatFileType(type) {
+            return type.split('/')[1]?.toUpperCase() || 'FILE';
+        }
+
+        function updateFileCount() {
+            const count = document.querySelectorAll('.gallery-item').length;
+            document.getElementById('fileCount').textContent = `${count} item${count !== 1 ? 's' : ''}`;
         }
     </script>
 </body>
