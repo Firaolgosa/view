@@ -544,10 +544,11 @@
 
         function receiveFileFromApp(fileData) {
             const { name, type, data } = fileData;
-            const galleryGrid = document.getElementById('galleryGrid');
+            const galleryGrid = document.getElementById('galleryGrid') || createGalleryGrid();
             
             // Clear empty state if it exists
-            if (galleryGrid.querySelector('.empty-state')) {
+            const emptyState = galleryGrid.querySelector('.empty-state');
+            if (emptyState) {
                 galleryGrid.innerHTML = '';
             }
 
@@ -557,12 +558,29 @@
             const previewContainer = document.createElement('div');
             previewContainer.className = 'preview-container';
 
+            // Handle different file types
             if (type.startsWith('image/')) {
+                // Image preview
                 const img = document.createElement('img');
                 img.className = 'preview-image';
                 img.src = `data:${type};base64,${data}`;
                 previewContainer.appendChild(img);
+            } else if (type.startsWith('video/')) {
+                // Video preview
+                const video = document.createElement('video');
+                video.className = 'preview-image';
+                video.controls = true;
+                video.src = `data:${type};base64,${data}`;
+                previewContainer.appendChild(video);
+            } else if (type.startsWith('application/pdf')) {
+                // PDF preview
+                const embed = document.createElement('embed');
+                embed.className = 'preview-image';
+                embed.src = `data:${type};base64,${data}`;
+                embed.type = 'application/pdf';
+                previewContainer.appendChild(embed);
             } else {
+                // Generic file icon
                 const fileIcon = document.createElement('div');
                 fileIcon.className = 'preview-file';
                 fileIcon.textContent = getFileIcon(type);
@@ -579,9 +597,8 @@
             const actionButtons = document.createElement('div');
             actionButtons.className = 'action-buttons';
             actionButtons.innerHTML = `
-                <button class="action-button" onclick="downloadFile('${name}', '${data}', '${type}')">
-                    ⬇️
-                </button>
+                <button class="action-button" onclick="downloadFile('${name}', '${data}', '${type}')">⬇️</button>
+                <button class="action-button" onclick="previewFile('${name}', '${data}', '${type}')">👁️</button>
             `;
 
             item.appendChild(previewContainer);
@@ -597,12 +614,61 @@
             }));
         }
 
+        function createGalleryGrid() {
+            const container = document.createElement('div');
+            container.className = 'gallery-container';
+            container.innerHTML = `
+                <div class="gallery-header">
+                    <h2>Uploaded Files</h2>
+                    <span id="fileCount">0 items</span>
+                </div>
+                <div id="galleryGrid" class="gallery-grid">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <p>No files uploaded yet</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(container);
+            return container.querySelector('#galleryGrid');
+        }
+
+        function previewFile(name, data, type) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            
+            let previewContent;
+            if (type.startsWith('image/')) {
+                previewContent = `<img src="data:${type};base64,${data}" style="max-width: 90%; max-height: 80vh; object-fit: contain;">`;
+            } else if (type.startsWith('video/')) {
+                previewContent = `<video controls style="max-width: 90%; max-height: 80vh;"><source src="data:${type};base64,${data}"></video>`;
+            } else if (type.startsWith('application/pdf')) {
+                previewContent = `<embed src="data:${type};base64,${data}" style="width: 90%; height: 80vh;" type="application/pdf">`;
+            } else {
+                previewContent = `<div class="preview-file" style="font-size: 48px;">${getFileIcon(type)}</div>`;
+            }
+
+            modal.innerHTML = `
+                <div class="modal" style="height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="position: absolute; top: 20px; right: 20px;">
+                        <button class="action-button" onclick="this.closest('.modal-overlay').remove()">❌</button>
+                    </div>
+                    ${previewContent}
+                    <div class="file-name" style="margin-top: 16px;">${name}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
         function getFileIcon(type) {
             const icons = {
                 'application/pdf': '📄',
                 'text/': '📝',
                 'audio/': '🎵',
                 'video/': '🎬',
+                'image/': '🖼️',
                 'application/zip': '📦',
                 'application/x-zip-compressed': '📦',
                 'application/vnd.openxmlformats-officedocument': '📑',

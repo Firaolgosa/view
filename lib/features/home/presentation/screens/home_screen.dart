@@ -231,7 +231,7 @@ Widget _buildFeaturedSection() {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Feature ${index + 1}',
+                    'Work ${index + 1}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
