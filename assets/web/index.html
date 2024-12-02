@@ -679,13 +679,22 @@
                 }
             });
         }
-        window.receiveFileFromApp = function(fileData) {
-            const { name, data, type } = fileData;
+        function receiveFileFromApp(fileData) {
+            const { name, type, data } = fileData;
             
             // Create file item in list
             const uploadList = document.getElementById('uploadList');
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
+            
+            // Add file preview/info
+            if (type.startsWith('image/')) {
+                // Image preview
+                const imgPreview = document.createElement('img');
+                imgPreview.src = `data:${type};base64,${data}`;
+                imgPreview.style.cssText = 'max-width: 100px; max-height: 100px; object-fit: cover; margin-right: 10px; border-radius: 4px;';
+                fileItem.appendChild(imgPreview);
+            }
             
             // Add file info
             const fileInfo = document.createElement('div');
@@ -710,7 +719,19 @@
             fileItem.appendChild(downloadBtn);
             
             uploadList.appendChild(fileItem);
-        };
+
+            // Show preview in preview container
+            const previewContainer = document.getElementById('previewContainer');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                if (type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = `data:${type};base64,${data}`;
+                    img.style.cssText = 'max-width: 100%; max-height: 300px; object-fit: contain;';
+                    previewContainer.appendChild(img);
+                }
+            }
+        }
 
         function base64ToBlob(base64, type) {
             const byteCharacters = atob(base64);
@@ -727,52 +748,6 @@
             }
 
             return new Blob(byteArrays, { type: type });
-        }
-
-        function receiveFileFromApp(fileData) {
-            const previewContainer = document.getElementById('previewContainer') || createPreviewContainer();
-            const { name, type, data } = fileData;
-            
-            // Clear any existing preview
-            previewContainer.innerHTML = '';
-            
-            // Create preview based on file type
-            if (type.startsWith('image/')) {
-                // Image preview
-                const img = document.createElement('img');
-                img.src = `data:${type};base64,${data}`;
-                img.style.cssText = 'max-width: 100%; max-height: 300px; object-fit: contain;';
-                previewContainer.appendChild(img);
-            } else if (type.startsWith('video/')) {
-                // Video preview
-                const video = document.createElement('video');
-                video.src = `data:${type};base64,${data}`;
-                video.controls = true;
-                video.style.cssText = 'max-width: 100%; max-height: 300px;';
-                previewContainer.appendChild(video);
-            } else {
-                // Generic file preview
-                const fileInfo = document.createElement('div');
-                fileInfo.className = 'file-info';
-                fileInfo.innerHTML = `
-                    <div class="file-preview">
-                        <div class="file-icon">📄</div>
-                        <div class="file-details">
-                            <div class="file-name">${name}</div>
-                            <div class="file-type">${type}</div>
-                        </div>
-                    </div>
-                `;
-                previewContainer.appendChild(fileInfo);
-            }
-        }
-
-        function createPreviewContainer() {
-            const container = document.createElement('div');
-            container.id = 'previewContainer';
-            container.className = 'preview-container';
-            document.body.appendChild(container);
-            return container;
         }
 
         function createGalleryGrid() {
