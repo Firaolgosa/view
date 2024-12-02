@@ -13,4 +13,4 @@ class NavigationService {
   static void pop(BuildContext context) {
     context.pop();
   }
-}
+}  

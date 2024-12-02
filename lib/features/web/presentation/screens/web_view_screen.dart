@@ -85,6 +85,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
         }
     }
   }
+  
 
   Future<void> _processWebMessage(dynamic message) async {
     if (message is Map) {
@@ -100,6 +101,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
           break;
         case 'close':
           Navigator.pop(context);
+          break;
+        case 'get_auth_user':
+          await _sendUserData();
           break;
         default:
           debugPrint('Unknown action: $action');
@@ -144,6 +148,23 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ''');
       }
     }
+  }
+
+  Future<void> _sendUserData() async {
+    // Static user data
+    final userData = {
+      'action': 'auth_user_response',
+      'data': {
+        'name': 'Henok  ',
+        'email': 'Henok.m@Eaglelion.com',
+        'role': 'Senior Developer'
+      }
+    };
+
+    // Send data to WebView
+    await controller.runJavaScript('''
+      window.postMessage('${jsonEncode(userData)}', '*');
+    ''');
   }
 
   @override

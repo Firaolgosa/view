@@ -433,6 +433,10 @@
         <div id="uploadList" class="upload-list"></div>
     </div>
 
+    <div>
+        <button id="authUser" class="button connect-button" onclick="getAuthenticatedUser()">User data</button>
+    </div>
+
     <div class="gallery-container">
         <div class="gallery-header">
             <h2>Uploaded Files</h2>
@@ -447,7 +451,6 @@
     </div>
 
     <script>
-        // Communication bridge between web and Flutter
         const FlutterBridge = {
             sendToFlutter: function(action, data) {
                 if (window.flutter_inappwebview) {
@@ -459,7 +462,6 @@
                 }
             }
         };
-
         function handlePermissionResponse(approved) {
             if (approved) {
                 FlutterBridge.sendToFlutter('navigate_to_instagram', {
@@ -491,7 +493,32 @@
                 window.flutter_inappwebview.postMessage('close');
             }
         }
-
+        function getAuthenticatedUser() {
+            FlutterBridge.sendToFlutter('get_auth_user', {});
+            
+            window.addEventListener('message', function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.action === 'auth_user_response') {
+                        const userData = message.data;
+                        document.getElementById('authUser').innerHTML = `
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2);
+                                  padding: 16px;
+                                  border-radius: 12px;
+                                  color: white;
+                                  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                                  margin: 20px;">
+                                <h3 style="margin-bottom: 8px;">User Profile</h3>
+                                <p>Name: ${userData.name}</p>
+                                <p>Email: ${userData.email}</p>
+                                <p>Role: ${userData.role}</p>
+                            </div>`;
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                }
+            });
+        }
         window.receiveFileFromApp = function(fileData) {
             const { name, data, type } = fileData;
             
@@ -689,6 +716,8 @@
             const count = document.querySelectorAll('.gallery-item').length;
             document.getElementById('fileCount').textContent = `${count} item${count !== 1 ? 's' : ''}`;
         }
+
+        
     </script>
 </body>
 </html>
