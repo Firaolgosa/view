@@ -389,6 +389,164 @@
             margin-bottom: 16px;
             color: #adb5bd;
         }
+
+        .preview-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .file-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .file-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .file-info {
+            text-align: center;
+        }
+
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .file-type {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        video.preview-content {
+            object-fit: contain;
+            background: black;
+        }
+
+        iframe.preview-content {
+            border: none;
+            background: white;
+        }
+
+        .gallery-container {
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .gallery-item {
+            position: relative;
+            height: 200px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: #f5f5f5;
+            border-radius: 12px;
+            font-style: italic;
+        }
+
+        .preview-content {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .action-buttons {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-button {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .preview-container {
+            margin: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .file-icon {
+            font-size: 32px;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #1a1a1a;
+        }
+
+        .file-type {
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -449,6 +607,8 @@
             </div>
         </div>
     </div>
+
+    <div class="preview-container" id="previewContainer"></div>
 
     <script>
         const FlutterBridge = {
@@ -570,94 +730,58 @@
         }
 
         function receiveFileFromApp(fileData) {
+            const previewContainer = document.getElementById('previewContainer') || createPreviewContainer();
             const { name, type, data } = fileData;
-            const galleryGrid = document.getElementById('galleryGrid') || createGalleryGrid();
             
-            // Clear empty state if it exists
-            const emptyState = galleryGrid.querySelector('.empty-state');
-            if (emptyState) {
-                galleryGrid.innerHTML = '';
-            }
-
-            const item = document.createElement('div');
-            item.className = 'gallery-item';
-
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'preview-container';
-
-            // Handle different file types
+            // Clear any existing preview
+            previewContainer.innerHTML = '';
+            
+            // Create preview based on file type
             if (type.startsWith('image/')) {
                 // Image preview
                 const img = document.createElement('img');
-                img.className = 'preview-image';
                 img.src = `data:${type};base64,${data}`;
+                img.style.cssText = 'max-width: 100%; max-height: 300px; object-fit: contain;';
                 previewContainer.appendChild(img);
             } else if (type.startsWith('video/')) {
                 // Video preview
                 const video = document.createElement('video');
-                video.className = 'preview-image';
-                video.controls = true;
                 video.src = `data:${type};base64,${data}`;
+                video.controls = true;
+                video.style.cssText = 'max-width: 100%; max-height: 300px;';
                 previewContainer.appendChild(video);
-            } else if (type.startsWith('application/pdf')) {
-                // PDF preview
-                const embed = document.createElement('embed');
-                embed.className = 'preview-image';
-                embed.src = `data:${type};base64,${data}`;
-                embed.type = 'application/pdf';
-                previewContainer.appendChild(embed);
             } else {
-                // Generic file icon
-                const fileIcon = document.createElement('div');
-                fileIcon.className = 'preview-file';
-                fileIcon.textContent = getFileIcon(type);
-                previewContainer.appendChild(fileIcon);
+                // Generic file preview
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+                fileInfo.innerHTML = `
+                    <div class="file-preview">
+                        <div class="file-icon">📄</div>
+                        <div class="file-details">
+                            <div class="file-name">${name}</div>
+                            <div class="file-type">${type}</div>
+                        </div>
+                    </div>
+                `;
+                previewContainer.appendChild(fileInfo);
             }
+        }
 
-            const fileInfo = document.createElement('div');
-            fileInfo.className = 'file-info';
-            fileInfo.innerHTML = `
-                <div class="file-name">${name}</div>
-                <div class="file-meta">${formatFileType(type)}</div>
-            `;
-
-            const actionButtons = document.createElement('div');
-            actionButtons.className = 'action-buttons';
-            actionButtons.innerHTML = `
-                <button class="action-button" onclick="downloadFile('${name}', '${data}', '${type}')">⬇️</button>
-                <button class="action-button" onclick="previewFile('${name}', '${data}', '${type}')">👁️</button>
-            `;
-
-            item.appendChild(previewContainer);
-            item.appendChild(fileInfo);
-            item.appendChild(actionButtons);
-            galleryGrid.appendChild(item);
-
-            updateFileCount();
-            
-            // Notify Flutter
-            Flutter.postMessage(JSON.stringify({
-                type: 'uploadComplete'
-            }));
+        function createPreviewContainer() {
+            const container = document.createElement('div');
+            container.id = 'previewContainer';
+            container.className = 'preview-container';
+            document.body.appendChild(container);
+            return container;
         }
 
         function createGalleryGrid() {
             const container = document.createElement('div');
-            container.className = 'gallery-container';
-            container.innerHTML = `
-                <div class="gallery-header">
-                    <h2>Uploaded Files</h2>
-                    <span id="fileCount">0 items</span>
-                </div>
-                <div id="galleryGrid" class="gallery-grid">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📁</div>
-                        <p>No files uploaded yet</p>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(container);
-            return container.querySelector('#galleryGrid');
+            container.id = 'galleryGrid';
+            container.className = 'gallery-grid';
+            container.innerHTML = '<div class="empty-state">Upload files to preview them here</div>';
+            document.querySelector('.gallery-container').appendChild(container);
+            return container;
         }
 
         function previewFile(name, data, type) {
@@ -717,7 +841,12 @@
             document.getElementById('fileCount').textContent = `${count} item${count !== 1 ? 's' : ''}`;
         }
 
-        
+        // Initialize gallery grid
+        window.addEventListener('load', () => {
+            if (!document.getElementById('galleryGrid')) {
+                createGalleryGrid();
+            }
+        });
     </script>
 </body>
 </html>

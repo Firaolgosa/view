@@ -5,6 +5,7 @@ import 'package:view/core/widgets/custom_modal.dart';
 import 'dart:convert';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:mime/mime.dart';
 
 
 class WebViewScreen extends StatefulWidget {
@@ -127,26 +128,31 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   Future<void> _pickAndUploadFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
-      allowMultiple: false,
-    );
-    
-    if (result != null) {
-      final file = result.files.first;
-      final bytes = file.bytes;
-      if (bytes != null) {
-        final base64File = base64Encode(bytes);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        final bytes = file.bytes;
         
-        // Send file to WebView
-        await controller.runJavaScript('''
-          receiveFileFromApp({
-            name: '${file.name}',
-            data: '$base64File',
-            type: '${file.extension ?? 'application/octet-stream'}'
-          });
-        ''');
+        if (bytes != null) {
+          final base64File = base64Encode(bytes);
+          final mimeType = lookupMimeType(file.name ?? '') ?? 'application/octet-stream';
+
+          await controller.runJavaScript('''
+            receiveFileFromApp({
+              name: '${file.name}',
+              type: '${mimeType}',
+              data: '$base64File'
+            });
+          ''');
+        }
       }
+    } catch (e) {
+      print('Error picking file: $e');
     }
   }
 
