@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
-class InstagramCloneScreen extends StatelessWidget {
+class InstagramCloneScreen extends StatefulWidget {
   const InstagramCloneScreen({super.key});
 
-  Future<void> _pickImage(BuildContext context) async {
+  @override
+  State<InstagramCloneScreen> createState() => _InstagramCloneScreenState();
+}
+
+class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
+  File? _selectedImage;
+
+  Future<void> _pickPostImage() async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
       
       if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Story added successfully!'),
+              content: Text('Image selected! Ready to post'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -124,7 +138,7 @@ class InstagramCloneScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: isYourStory ? () => _pickImage(context) : null,
+            onTap: isYourStory ? () => _pickPostImage() : null,
             child: Container(
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
@@ -234,21 +248,26 @@ class InstagramCloneScreen extends StatelessWidget {
       children: [
         AspectRatio(
           aspectRatio: 1,
-          child: Image.network(
-            'https://via.placeholder.com/400',
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: Colors.grey[900],
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
+          child: _selectedImage != null
+              ? Image.file(
+                  _selectedImage!,
+                  fit: BoxFit.cover,
+                )
+              : Image.network(
+                  'https://via.placeholder.com/400',
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.grey[900],
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         _buildPostActions(),
         _buildPostDetails(),
@@ -375,7 +394,11 @@ class InstagramCloneScreen extends StatelessWidget {
             label: 'Profile',
           ),
         ],
-        onTap: (index) {},
+        onTap: (index) {
+          if (index == 2) {
+            _pickPostImage();
+          }
+        },
       ),
     );
   }
