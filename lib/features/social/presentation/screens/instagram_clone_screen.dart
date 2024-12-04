@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
-
+import 'package:image_picker/image_picker.dart';
 
 class InstagramCloneScreen extends StatelessWidget {
   const InstagramCloneScreen({super.key});
+
+  Future<void> _pickImage(BuildContext context) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Story added successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,12 +98,13 @@ class InstagramCloneScreen extends StatelessWidget {
 
   Widget _buildStoryList() {
     return SizedBox(
-      height: 100,
+      height: 120,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         scrollDirection: Axis.horizontal,
         itemCount: 5,
         itemBuilder: (context, index) => _buildStoryItem(
+          context: context,
           name: index == 0 ? 'Your story' : 'user_$index',
           isYourStory: index == 0,
         ),
@@ -82,36 +112,43 @@ class InstagramCloneScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStoryItem({required String name, required bool isYourStory}) {
+  Widget _buildStoryItem({
+    required BuildContext context,
+    required String name,
+    required bool isYourStory
+  }) {
     return Container(
-      width: 85,
+      width: 72,
       margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              gradient: isYourStory ? null : const LinearGradient(
-                colors: [Color(0xFFE91E63), Color(0xFFF06292), Color(0xFFFF9800)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
+          GestureDetector(
+            onTap: isYourStory ? () => _pickImage(context) : null,
             child: Container(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                color: Colors.black,
+                gradient: isYourStory ? null : const LinearGradient(
+                  colors: [Color(0xFFE91E63), Color(0xFFF06292), Color(0xFFFF9800)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
-                border: isYourStory ? Border.all(color: Colors.grey[800]!, width: 1) : null,
               ),
-              child: CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.grey[800],
-                child: isYourStory 
-                  ? const Icon(Icons.add, color: Colors.white, size: 24)
-                  : null,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                  border: isYourStory ? Border.all(color: Colors.grey[800]!, width: 1) : null,
+                ),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.grey[800],
+                  child: isYourStory 
+                    ? const Icon(Icons.add, color: Colors.white, size: 24)
+                    : null,
+                ),
               ),
             ),
           ),
@@ -122,9 +159,8 @@ class InstagramCloneScreen extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 5,
+              fontSize: 11,
               fontWeight: isYourStory ? FontWeight.normal : FontWeight.w500,
-              overflow: TextOverflow.visible,
             ),
           ),
         ],
