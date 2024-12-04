@@ -11,6 +11,8 @@ class InstagramCloneScreen extends StatefulWidget {
 
 class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
   File? _selectedImage;
+  File? _selectedStoryImage;
+  bool _viewingStory = false;
 
   Future<void> _pickPostImage() async {
     try {
@@ -47,8 +49,60 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
     }
   }
 
+  Future<void> _pickStoryImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _selectedStoryImage = File(image.path);
+          _viewingStory = true;
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking story: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_viewingStory && _selectedStoryImage != null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: GestureDetector(
+          onTapDown: (_) => setState(() => _viewingStory = false),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.file(
+                _selectedStoryImage!,
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                top: 40,
+                right: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => setState(() => _viewingStory = false),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
@@ -131,15 +185,21 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
     required String name,
     required bool isYourStory
   }) {
-    return Container(
-      width: 72,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: isYourStory ? () => _pickPostImage() : null,
-            child: Container(
+    return GestureDetector(
+      onTap: () {
+        if (isYourStory) {
+          _pickStoryImage();
+        } else if (_selectedStoryImage != null) {
+          setState(() => _viewingStory = true);
+        }
+      },
+      child: Container(
+        width: 72,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 gradient: isYourStory ? null : const LinearGradient(
@@ -154,30 +214,35 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
                 decoration: BoxDecoration(
                   color: Colors.black,
                   shape: BoxShape.circle,
-                  border: isYourStory ? Border.all(color: Colors.grey[800]!, width: 1) : null,
+                  border: isYourStory && _selectedStoryImage == null 
+                      ? Border.all(color: Colors.grey[800]!, width: 1) 
+                      : null,
                 ),
                 child: CircleAvatar(
                   radius: 28,
                   backgroundColor: Colors.grey[800],
-                  child: isYourStory 
-                    ? const Icon(Icons.add, color: Colors.white, size: 24)
-                    : null,
+                  backgroundImage: _selectedStoryImage != null && isYourStory 
+                      ? FileImage(_selectedStoryImage!) 
+                      : null,
+                  child: isYourStory && _selectedStoryImage == null
+                      ? const Icon(Icons.add, color: Colors.white, size: 24)
+                      : null,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: isYourStory ? FontWeight.normal : FontWeight.w500,
+            const SizedBox(height: 4),
+            Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: isYourStory ? FontWeight.normal : FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
