@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:view/features/home/presentation/screens/home_screen.dart';
 import 'package:view/features/web/presentation/screens/web_view_screen.dart';
+import 'package:view/features/social/presentation/screens/instagram_clone_screen.dart';
 
 final GoRouter router = GoRouter(
   routes: [
@@ -14,5 +15,10 @@ final GoRouter router = GoRouter(
       name: 'web-view',
       builder: (context, state) => const WebViewScreen(),
     ),
+    GoRoute(
+  path: '/instagram',
+  name: 'instagram',
+  builder: (context, state) => const InstagramCloneScreen(),
+),
   ],
 );

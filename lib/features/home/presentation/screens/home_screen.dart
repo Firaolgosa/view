@@ -3,6 +3,7 @@ import 'package:view/core/widgets/responsive_layout.dart';
 import 'package:view/features/web/presentation/screens/web_view_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:view/core/widgets/theme_toggle_button.dart';
+import 'package:view/features/social/presentation/screens/instagram_clone_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -158,7 +159,12 @@ Widget _buildActionButtons(BuildContext context) {
         'Help',
         Icons.help,
         Colors.purple,
-        () {},
+        ()=> Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const InstagramCloneScreen(),
+          ),
+        ),
       ),
     ],
   );
