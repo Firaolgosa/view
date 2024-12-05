@@ -162,7 +162,7 @@ Widget _buildActionButtons(BuildContext context) {
         ()=> Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const InstagramCloneScreen(),
+            builder: (context) => const StoryScreen(),
           ),
         ),
       ),

@@ -18,7 +18,7 @@ final GoRouter router = GoRouter(
     GoRoute(
   path: '/instagram',
   name: 'instagram',
-  builder: (context, state) => const InstagramCloneScreen(),
+  builder: (context, state) => const StoryScreen(),
 ),
   ],
 );

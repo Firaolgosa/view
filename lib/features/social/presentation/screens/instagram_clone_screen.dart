@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class InstagramCloneScreen extends StatefulWidget {
-  const InstagramCloneScreen({super.key});
+class StoryScreen extends StatefulWidget {
+  const StoryScreen({super.key});
 
   @override
-  State<InstagramCloneScreen> createState() => _InstagramCloneScreenState();
+  State<StoryScreen> createState() => _StoryScreenState();
 }
 
-class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
+class _StoryScreenState extends State<StoryScreen> {
   File? _selectedImage;
   File? _selectedStoryImage;
   bool _viewingStory = false;
+  String? _postCaption;
 
   Future<void> _pickPostImage() async {
     try {
@@ -27,13 +28,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
           _selectedImage = File(image.path);
         });
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Image selected! Ready to post'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          await _showCaptionDialog();
         }
       }
     } catch (e) {
@@ -46,6 +41,49 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _showCaptionDialog() async {
+    final controller = TextEditingController();
+    final caption = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: const Text(
+          'Add a caption',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Write a caption...',
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[700]!),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[400])),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Post', style: TextStyle(color: Colors.blue)),
+          ),
+        ],
+      ),
+    );
+
+    if (caption != null) {
+      setState(() => _postCaption = caption);
     }
   }
 
@@ -141,7 +179,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
       elevation: 0,
       titleSpacing: 16,
       title: const Text(
-        'Instagram',
+        'Eaglelion',
         style: TextStyle(
           color: Colors.white,
           fontSize: 28,
@@ -203,7 +241,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 gradient: isYourStory ? null : const LinearGradient(
-                  colors: [Color(0xFFE91E63), Color(0xFFF06292), Color(0xFFFF9800)],
+                  colors: [Color(0xFFFFFFFF), Color(0xFFF06292), Color(0xFFFF9800)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -285,7 +323,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
               ),
               SizedBox(height: 1),
               Text(
-                'Bekoji, Ethiopia',
+                'AA, Ethiopia',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 11,
@@ -364,7 +402,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '433 likes',
+            'Firaol',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -373,34 +411,35 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Text(
-                'LEICESTER 3-1 WEST HAM',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  _selectedImage != null ? (_postCaption ?? 'Add a caption...') : '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Container(
+              if (_selectedImage == null) Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.grey[900],
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  'FULL-TIME',
+                  '',
                   style: TextStyle(
                     color: Colors.grey,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
+              ) else const SizedBox(),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'View all 1,234 comments',
+            'view comments',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -408,7 +447,7 @@ class _InstagramCloneScreenState extends State<InstagramCloneScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            '2 hours ago',
+            'now',
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 12,
