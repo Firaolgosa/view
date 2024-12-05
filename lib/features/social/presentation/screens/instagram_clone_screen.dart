@@ -10,7 +10,7 @@ class StoryScreen extends StatefulWidget {
   State<StoryScreen> createState() => _StoryScreenState();
 }
 
-class _StoryScreenState extends State<StoryScreen> {
+class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStateMixin {
   File? _selectedImage;
   File? _selectedStoryImage;
   bool _viewingStory = false;
@@ -18,9 +18,34 @@ class _StoryScreenState extends State<StoryScreen> {
   final int _storyDuration = 5; // Duration in seconds
   double _storyProgress = 0.0;
   Timer? _storyTimer;
+  int _currentStoryIndex = 0;
+  final int _totalStories = 5; // Match with your ListView.builder itemCount
+  late AnimationController _animationController;
+  late Animation<double> _slideAnimation;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    ).drive(Tween<double>(begin: 0.0, end: 1.0));
+
+    _rotationAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    ).drive(Tween<double>(begin: 0.0, end: 0.3));
+  }
 
   @override
   void dispose() {
+    _animationController.dispose();
     _storyTimer?.cancel();
     super.dispose();
   }
@@ -35,8 +60,14 @@ class _StoryScreenState extends State<StoryScreen> {
         _storyProgress += increment;
         if (_storyProgress >= 1.0) {
           _storyProgress = 0.0;
-          _viewingStory = false;
-          timer.cancel();
+          if (_currentStoryIndex < _totalStories - 1) {
+            _currentStoryIndex++;
+            _storyProgress = 0.0;
+          } else {
+            _viewingStory = false;
+            _currentStoryIndex = 0;
+            timer.cancel();
+          }
         }
       });
     });
@@ -140,56 +171,118 @@ class _StoryScreenState extends State<StoryScreen> {
     }
   }
 
+  void _animateToNextStory(bool forward) {
+    if (forward) {
+      setState(() {
+        _slideAnimation = CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeInOutCubic,
+        ).drive(Tween<double>(begin: 0.0, end: -1.0));
+
+        _rotationAnimation = CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeInOutCubic,
+        ).drive(Tween<double>(begin: 0.0, end: -0.3));
+      });
+    } else {
+      setState(() {
+        _slideAnimation = CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeInOutCubic,
+        ).drive(Tween<double>(begin: 0.0, end: 1.0));
+
+        _rotationAnimation = CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeInOutCubic,
+        ).drive(Tween<double>(begin: 0.0, end: 0.3));
+      });
+    }
+
+    _animationController.forward(from: 0.0).then((_) {
+      setState(() {
+        forward ? _currentStoryIndex++ : _currentStoryIndex--;
+        _storyProgress = 0.0;
+      });
+      _animationController.reset();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_viewingStory && _selectedStoryImage != null) {
-      _startStoryTimer(); // Start timer when showing story
+      _startStoryTimer();
       return Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
-          onTapDown: (_) {
-            _storyTimer?.cancel();
-            setState(() {
-              _storyProgress = 0.0;
-              _viewingStory = false;
-            });
+          onTapDown: (details) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            if (details.globalPosition.dx < screenWidth / 2) {
+              if (_currentStoryIndex > 0) {
+                _storyTimer?.cancel();
+                _animateToNextStory(false);
+              }
+            } else {
+              if (_currentStoryIndex < _totalStories - 1) {
+                _storyTimer?.cancel();
+                _animateToNextStory(true);
+              } else {
+                _storyTimer?.cancel();
+                setState(() {
+                  _storyProgress = 0.0;
+                  _viewingStory = false;
+                  _currentStoryIndex = 0;
+                });
+              }
+            }
           },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.file(
-                _selectedStoryImage!,
-                fit: BoxFit.cover,
-              ),
-              Positioned(
-                top: 40,
-                left: 10,
-                right: 10,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: _storyProgress,
-                    backgroundColor: Colors.grey.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                    minHeight: 2,
-                  ),
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return Transform(
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001)
+                  ..translate(_slideAnimation.value * MediaQuery.of(context).size.width)
+                  ..rotateY(_rotationAnimation.value),
+                alignment: _slideAnimation.value < 0 ? Alignment.centerRight : Alignment.centerLeft,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.file(
+                      _selectedStoryImage!,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned(
+                      top: 40,
+                      left: 10,
+                      right: 10,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: _storyProgress,
+                          backgroundColor: Colors.grey.withOpacity(0.3),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          minHeight: 2,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      right: 10,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                        onPressed: () {
+                          _storyTimer?.cancel();
+                          setState(() {
+                            _storyProgress = 0.0;
+                            _viewingStory = false;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Positioned(
-                top: 40,
-                right: 10,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () {
-                    _storyTimer?.cancel();
-                    setState(() {
-                      _storyProgress = 0.0;
-                      _viewingStory = false;
-                    });
-                  },
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       );
