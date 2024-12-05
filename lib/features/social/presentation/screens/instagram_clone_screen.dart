@@ -23,6 +23,9 @@ class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStat
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _rotationAnimation;
+  List<File> _storyImages = [];
+  List<double> _storyProgresses = [];
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -56,16 +59,19 @@ class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStat
     
     _storyTimer?.cancel();
     _storyTimer = Timer.periodic(updateInterval, (timer) {
+      if (!mounted) return; // Check if widget is still mounted
+      
       setState(() {
-        _storyProgress += increment;
-        if (_storyProgress >= 1.0) {
-          _storyProgress = 0.0;
-          if (_currentStoryIndex < _totalStories - 1) {
-            _currentStoryIndex++;
-            _storyProgress = 0.0;
+        _storyProgresses[_currentImageIndex] += increment;
+        if (_storyProgresses[_currentImageIndex] >= 1.0) {
+          if (_currentImageIndex < _storyImages.length - 1) {
+            _currentImageIndex++;
+            _selectedStoryImage = _storyImages[_currentImageIndex];
+            _startStoryTimer(); // Restart timer for next image
           } else {
             _viewingStory = false;
-            _currentStoryIndex = 0;
+            _currentImageIndex = 0;
+            _storyProgresses = List.filled(_storyImages.length, 0.0);
             timer.cancel();
           }
         }
@@ -155,8 +161,12 @@ class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStat
       
       if (image != null) {
         setState(() {
-          _selectedStoryImage = File(image.path);
+          _storyImages.add(File(image.path));
+          _storyProgresses = List.filled(_storyImages.length, 0.0); // Reset all progresses
+          _selectedStoryImage = _storyImages[_currentImageIndex];
           _viewingStory = true;
+          _currentImageIndex = _storyImages.length - 1; // Set to latest image
+          _startStoryTimer(); // Restart timer for new image
         });
       }
     } catch (e) {
@@ -209,80 +219,86 @@ class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    if (_viewingStory && _selectedStoryImage != null) {
-      _startStoryTimer();
+    if (_viewingStory && _storyImages.isNotEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
           onTapDown: (details) {
             final screenWidth = MediaQuery.of(context).size.width;
+            _storyTimer?.cancel(); // Cancel current timer
+            
             if (details.globalPosition.dx < screenWidth / 2) {
-              if (_currentStoryIndex > 0) {
-                _storyTimer?.cancel();
-                _animateToNextStory(false);
+              if (_currentImageIndex > 0) {
+                setState(() {
+                  _storyProgresses[_currentImageIndex] = 0.0;
+                  _currentImageIndex--;
+                  _selectedStoryImage = _storyImages[_currentImageIndex];
+                  _startStoryTimer(); // Restart timer for previous image
+                });
               }
             } else {
-              if (_currentStoryIndex < _totalStories - 1) {
-                _storyTimer?.cancel();
-                _animateToNextStory(true);
-              } else {
-                _storyTimer?.cancel();
+              if (_currentImageIndex < _storyImages.length - 1) {
                 setState(() {
-                  _storyProgress = 0.0;
+                  _storyProgresses[_currentImageIndex] = 1.0;
+                  _currentImageIndex++;
+                  _selectedStoryImage = _storyImages[_currentImageIndex];
+                  _startStoryTimer(); // Restart timer for next image
+                });
+              } else {
+                setState(() {
                   _viewingStory = false;
-                  _currentStoryIndex = 0;
+                  _currentImageIndex = 0;
+                  _storyProgresses = List.filled(_storyImages.length, 0.0);
                 });
               }
             }
           },
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform(
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.001)
-                  ..translate(_slideAnimation.value * MediaQuery.of(context).size.width)
-                  ..rotateY(_rotationAnimation.value),
-                alignment: _slideAnimation.value < 0 ? Alignment.centerRight : Alignment.centerLeft,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.file(
-                      _selectedStoryImage!,
-                      fit: BoxFit.cover,
-                    ),
-                    Positioned(
-                      top: 40,
-                      left: 10,
-                      right: 10,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: _storyProgress,
-                          backgroundColor: Colors.grey.withOpacity(0.3),
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                          minHeight: 2,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.file(
+                _storyImages[_currentImageIndex],
+                fit: BoxFit.cover,
+              ),
+              Positioned(
+                top: 40,
+                left: 10,
+                right: 10,
+                child: Row(
+                  children: List.generate(
+                    _storyImages.length,
+                    (index) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: _storyProgresses[index],
+                            backgroundColor: Colors.grey.withOpacity(0.3),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                            minHeight: 2,
+                          ),
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 40,
-                      right: 10,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                        onPressed: () {
-                          _storyTimer?.cancel();
-                          setState(() {
-                            _storyProgress = 0.0;
-                            _viewingStory = false;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              );
-            },
+              ),
+              Positioned(
+                top: 40,
+                right: 10,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () {
+                    _storyTimer?.cancel();
+                    setState(() {
+                      _storyProgress = 0.0;
+                      _viewingStory = false;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -374,8 +390,13 @@ class _StoryScreenState extends State<StoryScreen> with SingleTickerProviderStat
       onTap: () {
         if (isYourStory) {
           _pickStoryImage();
-        } else if (_selectedStoryImage != null) {
-          setState(() => _viewingStory = true);
+        } else if (_storyImages.isNotEmpty) {
+          setState(() {
+            _viewingStory = true;
+            _currentImageIndex = 0;
+            _selectedStoryImage = _storyImages[0];
+            _storyProgresses = List.filled(_storyImages.length, 0.0);
+          });
         }
       },
       child: Container(
