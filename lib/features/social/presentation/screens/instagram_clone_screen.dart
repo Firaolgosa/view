@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:async';
 
 class StoryScreen extends StatefulWidget {
   const StoryScreen({super.key});
@@ -14,6 +15,32 @@ class _StoryScreenState extends State<StoryScreen> {
   File? _selectedStoryImage;
   bool _viewingStory = false;
   String? _postCaption;
+  final int _storyDuration = 5; // Duration in seconds
+  double _storyProgress = 0.0;
+  Timer? _storyTimer;
+
+  @override
+  void dispose() {
+    _storyTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startStoryTimer() {
+    const updateInterval = Duration(milliseconds: 50);
+    final increment = updateInterval.inMilliseconds / (_storyDuration * 1000);
+    
+    _storyTimer?.cancel();
+    _storyTimer = Timer.periodic(updateInterval, (timer) {
+      setState(() {
+        _storyProgress += increment;
+        if (_storyProgress >= 1.0) {
+          _storyProgress = 0.0;
+          _viewingStory = false;
+          timer.cancel();
+        }
+      });
+    });
+  }
 
   Future<void> _pickPostImage() async {
     try {
@@ -116,10 +143,17 @@ class _StoryScreenState extends State<StoryScreen> {
   @override
   Widget build(BuildContext context) {
     if (_viewingStory && _selectedStoryImage != null) {
+      _startStoryTimer(); // Start timer when showing story
       return Scaffold(
         backgroundColor: Colors.black,
         body: GestureDetector(
-          onTapDown: (_) => setState(() => _viewingStory = false),
+          onTapDown: (_) {
+            _storyTimer?.cancel();
+            setState(() {
+              _storyProgress = 0.0;
+              _viewingStory = false;
+            });
+          },
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -129,10 +163,30 @@ class _StoryScreenState extends State<StoryScreen> {
               ),
               Positioned(
                 top: 40,
+                left: 10,
+                right: 10,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: _storyProgress,
+                    backgroundColor: Colors.grey.withOpacity(0.3),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    minHeight: 2,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
                 right: 10,
                 child: IconButton(
                   icon: const Icon(Icons.close, color: Colors.white, size: 30),
-                  onPressed: () => setState(() => _viewingStory = false),
+                  onPressed: () {
+                    _storyTimer?.cancel();
+                    setState(() {
+                      _storyProgress = 0.0;
+                      _viewingStory = false;
+                    });
+                  },
                 ),
               ),
             ],
