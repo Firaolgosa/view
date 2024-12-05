@@ -143,14 +143,14 @@ Widget _buildActionButtons(BuildContext context) {
         ),
       ),
       _buildActionButton(
-        'Facebook',
-        Icons.facebook,
+        'House Tour',
+        Icons.house,
         Colors.blue,
         () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const WebViewScreen(
-              url: 'https://www.facebook.com',
+              url: 'https://cbrs-dashboard-8mig.vercel.app/',
             ),
           ),
         ),

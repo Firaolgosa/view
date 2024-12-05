@@ -34,7 +34,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (NavigationRequest request) {
-            if (request.url.contains('facebook.com/login')) {
+            if (request.url.contains('https://cbrs-dashboard-8mig.vercel.app/')) {
               _showFacebookPermissionModal();
               return NavigationDecision.prevent;
             }
