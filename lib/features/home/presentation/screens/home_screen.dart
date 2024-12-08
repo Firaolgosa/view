@@ -218,39 +218,49 @@ Widget _buildFeaturedSection() {
           scrollDirection: Axis.horizontal,
           itemCount: 5,
           itemBuilder: (context, index) {
-            return Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue[400]!,
-                    Colors.blue[800]!,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WebViewScreen(
+                    url: 'https://cbrs-dashboard-8mig.vercel.app/',
+                  ),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.star,
-                    size: 48,
-                    color: Colors.white,
+              child: Container(
+                width: 160,
+                margin: const EdgeInsets.only(right: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue[400]!,
+                      Colors.blue[800]!,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Work ${index + 1}',
-                    style: const TextStyle(
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.star,
+                      size: 48,
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                ],
-              )
+                    const SizedBox(height: 8),
+                    Text(
+                      'Work ${index + 1}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),
