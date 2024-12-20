@@ -4,6 +4,7 @@ import 'package:view/features/web/presentation/screens/web_view_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:view/core/widgets/theme_toggle_button.dart';
 import 'package:view/features/social/presentation/screens/instagram_clone_screen.dart';
+import 'package:view/features/nfc/presentation/screens/nfc_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -67,7 +68,8 @@ class _HomeMobileLayout extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.all(16.0),
               sliver: SliverList(
-                delegate: SliverChildListDelegate([                  const SizedBox(height: 24),
+                delegate: SliverChildListDelegate([
+                  const SizedBox(height: 24),
                   _buildActionButtons(context),
                   const SizedBox(height: 24),
                   _buildFeaturedSection(),
@@ -159,10 +161,21 @@ Widget _buildActionButtons(BuildContext context) {
         'Help',
         Icons.help,
         Colors.purple,
-        ()=> Navigator.push(
+        () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const StoryScreen(),
+          ),
+        ),
+      ),
+      _buildActionButton(
+        'NFC',
+        Icons.nfc,
+        Colors.indigo,
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const NFCScreen(),
           ),
         ),
       ),
@@ -287,7 +300,8 @@ class _HomeDesktopLayout extends StatelessWidget {
                 SliverPadding(
                   padding: const EdgeInsets.all(24.0),
                   sliver: SliverGrid(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       mainAxisSpacing: 24.0,
                       crossAxisSpacing: 24.0,

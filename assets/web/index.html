@@ -548,6 +548,298 @@
             color: #666;
         }
     </style>
+    <script>
+        const FlutterBridge = {
+            sendToFlutter: function(action, data) {
+                if (window.flutter_inappwebview) {
+                    window.flutter_inappwebview.postMessage(JSON.stringify({
+                        action: action,
+                        data: data,
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+            }
+        };
+        function handlePermissionResponse(approved) {
+            if (approved) {
+                FlutterBridge.sendToFlutter('navigate_to_instagram', {
+                    approved: true,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            document.getElementById('permissionModal').style.display = 'none';
+        }
+
+        function handleBuy() {
+            document.getElementById('permissionModal').style.display = 'flex';
+        }
+
+        // Enhanced connect handler with more functionality
+        function handleConnect() {
+            FlutterBridge.sendToFlutter('connect', {
+                deviceInfo: {
+                    userAgent: navigator.userAgent,
+                    language: navigator.language,
+                    platform: navigator.platform
+                },
+                connectionType: 'webview'
+            });
+        }
+
+        function handleClose() {
+            if (window.flutter_inappwebview) {
+                window.flutter_inappwebview.postMessage('close');
+            }
+        }
+        function getAuthenticatedUser() {
+            FlutterBridge.sendToFlutter('get_auth_user', {});
+            
+            window.addEventListener('message', function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.action === 'auth_user_response') {
+                        const userData = message.data;
+                        document.getElementById('authUser').innerHTML = `
+                            <div style="background: linear-gradient(135deg, #667eea, #764ba2);
+                                  padding: 16px;
+                                  border-radius: 12px;
+                                  color: white;
+                                  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                                  margin: 20px;">
+                                <h3 style="margin-bottom: 8px;">User Profile</h3>
+                                <p>Name: ${userData.name}</p>
+                                <p>Email: ${userData.email}</p>
+                                <p>Role: ${userData.role}</p>
+                            </div>`;
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                }
+            });
+        }
+        function receiveFileFromApp(fileData) {
+            const { name, type, data } = fileData;
+            
+            // Create file item in list
+            const uploadList = document.getElementById('uploadList');
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            // Add file preview/info
+            if (type.startsWith('image/')) {
+                // Image preview
+                const imgPreview = document.createElement('img');
+                imgPreview.src = `data:${type};base64,${data}`;
+                imgPreview.style.cssText = 'max-width: 100px; max-height: 100px; object-fit: cover; margin-right: 10px; border-radius: 4px;';
+                fileItem.appendChild(imgPreview);
+            }
+            
+            // Add file info
+            const fileInfo = document.createElement('div');
+            fileInfo.textContent = `${name} (${type})`;
+            fileItem.appendChild(fileInfo);
+            
+            // Add download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'upload-button';
+            downloadBtn.textContent = 'Download';
+            downloadBtn.onclick = () => {
+                const blob = base64ToBlob(data, type);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+            fileItem.appendChild(downloadBtn);
+            
+            uploadList.appendChild(fileItem);
+
+            // Show preview in preview container
+            const previewContainer = document.getElementById('previewContainer');
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+                if (type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = `data:${type};base64,${data}`;
+                    img.style.cssText = 'max-width: 100%; max-height: 300px; object-fit: contain;';
+                    previewContainer.appendChild(img);
+                }
+            }
+        }
+
+        function base64ToBlob(base64, type) {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+
+            for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+                const slice = byteCharacters.slice(offset, offset + 512);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+
+            return new Blob(byteArrays, { type: type });
+        }
+
+        function createGalleryGrid() {
+            const container = document.createElement('div');
+            container.id = 'galleryGrid';
+            container.className = 'gallery-grid';
+            container.innerHTML = '<div class="empty-state">Upload files to preview them here</div>';
+            document.querySelector('.gallery-container').appendChild(container);
+            return container;
+        }
+
+        function previewFile(name, data, type) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.display = 'flex';
+            
+            let previewContent;
+            if (type.startsWith('image/')) {
+                previewContent = `<img src="data:${type};base64,${data}" style="max-width: 90%; max-height: 80vh; object-fit: contain;">`;
+            } else if (type.startsWith('video/')) {
+                previewContent = `<video controls style="max-width: 90%; max-height: 80vh;"><source src="data:${type};base64,${data}"></video>`;
+            } else if (type.startsWith('application/pdf')) {
+                previewContent = `<embed src="data:${type};base64,${data}" style="width: 90%; height: 80vh;" type="application/pdf">`;
+            } else {
+                previewContent = `<div class="preview-file" style="font-size: 48px;">${getFileIcon(type)}</div>`;
+            }
+
+            modal.innerHTML = `
+                <div class="modal" style="height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="position: absolute; top: 20px; right: 20px;">
+                        <button class="action-button" onclick="this.closest('.modal-overlay').remove()">❌</button>
+                    </div>
+                    ${previewContent}
+                    <div class="file-name" style="margin-top: 16px;">${name}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function getFileIcon(type) {
+            const icons = {
+                'application/pdf': '📄',
+                'text/': '📝',
+                'audio/': '🎵',
+                'video/': '🎬',
+                'image/': '🖼️',
+                'application/zip': '📦',
+                'application/x-zip-compressed': '📦',
+                'application/vnd.openxmlformats-officedocument': '📑',
+                'application/msword': '📑',
+            };
+
+            for (const [key, icon] of Object.entries(icons)) {
+                if (type.startsWith(key)) return icon;
+            }
+            return '📄';
+        }
+
+        function formatFileType(type) {
+            return type.split('/')[1]?.toUpperCase() || 'FILE';
+        }
+
+        function updateFileCount() {
+            const count = document.querySelectorAll('.gallery-item').length;
+            document.getElementById('fileCount').textContent = `${count} item${count !== 1 ? 's' : ''}`;
+        }
+
+        // Initialize gallery grid
+        window.addEventListener('load', () => {
+            if (!document.getElementById('galleryGrid')) {
+                createGalleryGrid();
+            }
+        });
+
+        // Add NFC Web API support check and functions
+        const NFCWeb = {
+            isAvailable: async function() {
+                if ('NDEFReader' in window) {
+                    try {
+                        const ndef = new NDEFReader();
+                        await ndef.scan();
+                        return true;
+                    } catch(error) {
+                        console.error(`Error checking NFC: ${error}`);
+                        return false;
+                    }
+                }
+                return false;
+            },
+
+            startScanning: async function() {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.scan();
+                    
+                    ndef.addEventListener("reading", ({ message, serialNumber }) => {
+                        for (const record of message.records) {
+                            FlutterBridge.sendToFlutter('nfc_read', {
+                                serialNumber: serialNumber,
+                                recordType: record.recordType,
+                                data: new TextDecoder().decode(record.data)
+                            });
+                        }
+                    });
+
+                    FlutterBridge.sendToFlutter('nfc_status', {
+                        status: 'started',
+                        message: 'NFC scanning started'
+                    });
+                } catch(error) {
+                    FlutterBridge.sendToFlutter('nfc_error', {
+                        error: error.message
+                    });
+                }
+            },
+
+            writeTag: async function(data) {
+                try {
+                    const ndef = new NDEFReader();
+                    await ndef.write({
+                        records: [{
+                            recordType: "text",
+                            data: data
+                        }]
+                    });
+                    
+                    FlutterBridge.sendToFlutter('nfc_write_success', {
+                        message: 'Data written successfully'
+                    });
+                } catch(error) {
+                    FlutterBridge.sendToFlutter('nfc_write_error', {
+                        error: error.message
+                    });
+                }
+            }
+        };
+
+        // Add to existing FlutterBridge object
+        Object.assign(FlutterBridge, {
+            nfcIsAvailable: async function() {
+                const available = await NFCWeb.isAvailable();
+                this.sendToFlutter('nfc_availability', { available });
+            },
+            
+            nfcStartScanning: function() {
+                NFCWeb.startScanning();
+            },
+            
+            nfcWriteTag: function(data) {
+                NFCWeb.writeTag(data);
+            }
+        });
+    </script>
 </head>
 <body>
     <button class="close-button" onclick="handleClose()">
