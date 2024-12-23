@@ -1,6 +1,6 @@
 import 'package:nfc_manager/nfc_manager.dart';
-import 'package:ndef/record.dart';
 import 'dart:convert';
+import 'dart:typed_data';
 
 class NFCService {
   static Future<bool> isAvailable() async {
@@ -12,13 +12,11 @@ class NFCService {
     required Function(String) onError,
   }) async {
     try {
-      // Check NFC availability
       if (!await isAvailable()) {
         onError('NFC is not available on this device');
         return;
       }
 
-      // Start NFC session
       NfcManager.instance.startSession(
         onDiscovered: (NfcTag tag) async {
           try {
@@ -28,15 +26,13 @@ class NFCService {
               return;
             }
 
-            final records = await ndefTag.read();
+            final ndefMessage = await ndefTag.read();
             String tagData = '';
 
-            for (final record in records) {
-              if (record is NdefRecord) {
-                if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown ||
-                    record.typeNameFormat == NdefTypeNameFormat.media) {
-                  tagData += String.fromCharCodes(record.payload);
-                }
+            for (final record in ndefMessage.records) {
+              if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown ||
+                  record.typeNameFormat == NdefTypeNameFormat.media) {
+                tagData += String.fromCharCodes(record.payload);
               }
             }
 
@@ -78,15 +74,16 @@ class NFCService {
 
             final record = NdefRecord(
               typeNameFormat: NdefTypeNameFormat.nfcWellknown,
-              type: [0x54], // 'T' for text record
-              identifier: [],
+              type: Uint8List.fromList([0x54]), // 'T' for text record
+              identifier: Uint8List(0),
               payload: Uint8List.fromList([
                 0x02, // UTF8
                 ...utf8.encode(data),
               ]),
             );
 
-            await ndef.write([record]);
+            final message = NdefMessage([record]);
+            await ndef.write(message);
           } catch (e) {
             throw Exception('Error writing to NFC tag: $e');
           } finally {

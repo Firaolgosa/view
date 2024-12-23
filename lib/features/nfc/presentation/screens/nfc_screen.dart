@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:view/features/nfc/presentation/screens/nfc_receiver_screen.dart';
 
 class NFCScreen extends StatefulWidget {
   const NFCScreen({super.key});
@@ -117,37 +118,67 @@ class _NFCScreenState extends State<NFCScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isScanning ? null : _handleNFCSend,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2962FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 4,
-                          ),
-                          child: _isScanning
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white)
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.nfc, color: Colors.white),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Send via NFC',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _isScanning ? null : _handleNFCSend,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2962FF),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 4,
                                 ),
-                        ),
+                                child: _isScanning
+                                    ? const CircularProgressIndicator(
+                                        color: Colors.white)
+                                    : const Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.send, color: Colors.white),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Send via NFC',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const NFCReceiverScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: const Icon(Icons.wifi_tethering,
+                                  color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
