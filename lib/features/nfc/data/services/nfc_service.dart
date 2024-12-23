@@ -1,6 +1,6 @@
 import 'package:nfc_manager/nfc_manager.dart';
-import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
 import 'package:ndef/record.dart';
+import 'dart:convert';
 
 class NFCService {
   static Future<bool> isAvailable() async {
@@ -32,13 +32,19 @@ class NFCService {
             String tagData = '';
 
             for (final record in records) {
-              if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown) {
-                final wellKnownRecord = record as NdefWellKnownRecord;
-                tagData += String.fromCharCodes(wellKnownRecord.payload);
+              if (record is NdefRecord) {
+                if (record.typeNameFormat == NdefTypeNameFormat.nfcWellknown ||
+                    record.typeNameFormat == NdefTypeNameFormat.media) {
+                  tagData += String.fromCharCodes(record.payload);
+                }
               }
             }
 
-            onTagRead(tagData);
+            if (tagData.isNotEmpty) {
+              onTagRead(tagData);
+            } else {
+              onError('No readable data found on tag');
+            }
           } catch (e) {
             onError('Error reading NFC tag: $e');
           } finally {
@@ -66,7 +72,20 @@ class NFCService {
               throw Exception('Tag is not NDEF formatted');
             }
 
-            final record = NdefRecord.createText(data);
+            if (!ndef.isWritable) {
+              throw Exception('Tag is not writable');
+            }
+
+            final record = NdefRecord(
+              typeNameFormat: NdefTypeNameFormat.nfcWellknown,
+              type: [0x54], // 'T' for text record
+              identifier: [],
+              payload: Uint8List.fromList([
+                0x02, // UTF8
+                ...utf8.encode(data),
+              ]),
+            );
+
             await ndef.write([record]);
           } catch (e) {
             throw Exception('Error writing to NFC tag: $e');
