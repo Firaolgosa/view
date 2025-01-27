@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:mime/mime.dart';
 
-
 class WebViewScreen extends StatefulWidget {
   final String? url;
   const WebViewScreen({super.key, this.url});
@@ -34,7 +33,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onNavigationRequest: (NavigationRequest request) {
-            if (request.url.contains('https://cbrs-dashboard-8mig.vercel.app/')) {
+            if (request.url
+                .contains('https://cbrs-dashboard-8mig.vercel.app/')) {
               _showFacebookPermissionModal();
               return NavigationDecision.prevent;
             }
@@ -74,19 +74,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   void _handleWebMessage(JavaScriptMessage message) {
     if (message.message == 'close') {
-        Navigator.pop(context);
+      Navigator.pop(context);
     } else if (message.message == 'navigate_to_instagram') {
-        _showPermissionModal();
+      _showPermissionModal();
     } else {
-        try {
-            final data = jsonDecode(message.message);
-            _processWebMessage(data);
-        } catch (e) {
-            debugPrint('Error processing message: $e');
-        }
+      try {
+        final data = jsonDecode(message.message);
+        _processWebMessage(data);
+      } catch (e) {
+        debugPrint('Error processing message: $e');
+      }
     }
   }
-  
 
   Future<void> _processWebMessage(dynamic message) async {
     if (message is Map) {
@@ -137,10 +136,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         final bytes = file.bytes;
-        
+
         if (bytes != null) {
           final base64File = base64Encode(bytes);
-          final mimeType = lookupMimeType(file.name ?? '') ?? 'application/octet-stream';
+          final mimeType =
+              lookupMimeType(file.name ?? '') ?? 'application/octet-stream';
 
           await controller.runJavaScript('''
             receiveFileFromApp({
@@ -188,7 +188,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
         if (_showModal)
           CustomModal(
             title: 'Permission Required',
-            message: 'Would you like to proceed to Instagram.com to complete your purchase?',
+            message:
+                'Would you like to proceed to Instagram.com to complete your purchase?',
             onConfirm: () {
               setState(() => _showModal = false);
               controller.loadRequest(Uri.parse('https://www.instagram.com'));

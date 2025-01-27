@@ -14,7 +14,11 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/web-view',
       name: 'web-view',
-      builder: (context, state) => const WebViewScreen(),
+      builder: (context, state) {
+        final Map<String, dynamic>? extra =
+            state.extra as Map<String, dynamic>?;
+        return WebViewScreen(url: extra?['url']);
+      },
     ),
     GoRoute(
       path: '/instagram',
